@@ -1,0 +1,1 @@
+web: gunicorn exoman.wsgi --log-file -
