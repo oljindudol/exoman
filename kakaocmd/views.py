@@ -8,8 +8,8 @@ from datetime import deltatime
 
 mslist = []
 cmdlist = ["일정", "ㅇㅈ", "일정등록", "ㅇㅈㄷㄹ", "일정삭제", "ㅇㅈㅅㅈ"]
-longweeklist = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
 shortweeklist = ["월", "화", "수", "목", "금", "토", "일"]
+longweeklist = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
 
 # main함수
 def home(request, cmd, cmdpram):
@@ -85,13 +85,18 @@ def createschedule(strparam):
 
     # 날짜형식이 유효할시
     # 날짜,요일 설정
-    elif isdate(tempcmd[0] == True):
-        dummy = 0
-
-    # 날짜가 유효하지 않을 시
-    # 에러메세지 설정하고 함수끝
     else:
-        return 0
+        temprtn = tofulldate(tempcmd[0])
+
+        if temprtn != "err":
+            strfulldate = temprtn
+            strday = shortweeklist[datetime.strptime(temprtn, "%Y/%m/%d").weekday]
+
+        # 날짜가 유효하지 않을 시
+        # 에러메세지 설정하고 함수끝
+        else:
+            mslist.append("날짜형식이 유효하지않습니다.\nex1)월\nex2)화요일\nex3)7-8\nex4)07/08 ")
+            return 0
 
     ##시간설정블록
     # 시간이 유효할시
@@ -135,7 +140,7 @@ def selectschedule(pram):
     return 0
 
 
-# 갯수체크를 한다.
+# 인수의 갯수를 체크한다.
 # 인수 minparam:최소 인수 갯수
 # 인수 paramlenth:받은 인수 갯수
 # 반환 인수갯수가 최소갯수보다 크거나 같을시 True를 반환
@@ -148,28 +153,71 @@ def hasEnoughParam(minparam, paramlenth):
         return False
 
 
-# 날짜인지체크 한다
+# 인수를 날짜로 변환한다
 # 인수 날짜부
-# 반환 날짜가 유효할시 True
+# 반환 날짜가 유효할시 날짜(yyyy/mm/dd)
+# 반환 날짜가 유효하지 않을 시 err
 # 가능포맷1 MM/DD or M/D
 # 가능포맷2 MM-DD or M-D
 # 가능포맷3 MM월DD일 or M월D일
-# 불가능포맷 MMDD
-def isdate(date):
+# 가능포맷4 MMDD
+def tofulldate(dparam):
+    tyear = datetime.now().year
+    tnowmon = datetime.now().month
+    tmon = 0
+    tdate = 0
+    rtn = ""
 
-    # 체크1. 길이판별
-    # return False
+    # 구분자가 '월'일경우 ex)m월d일
+    # 파라미터 분리
+    # 월,일부분이 없을 경우 에러 설정
+    if "월" in dparam:
+        ttemp = dparam.splite("월")
+        if len(ttemp) > 1:
+            tmon = ttemp[0]
+            tdate = ttemp[1].splite("일")[0]
+        else:
+            rtn = "err"
 
-    # 체크2. MM-DD 혹은 MM/DD형식인지 판별
-    # return False
+    # 구분자가 '-'일경우 ex)m-d일
+    # 파라미터 분리
+    # 월,일부분이 없을 경우 에러 설정
+    elif "-" in dparam:
+        ttemp = dparam.splite("-")
+        if len(ttemp) > 1:
+            tmon = ttemp[0]
+            tdate = ttemp[1]
+        else:
+            rtn = "err"
+    # 구분자가 '/'일경우 ex)m/d일
+    # 월,일부분이 없을 경우 에러 설정
+    elif "/" in dparam:
+        ttemp = dparam.splite("/")
+        if len(ttemp) > 1:
+            tmon = ttemp[0]
+            tdate = ttemp[1]
+        else:
+            rtn = "err"
+    # mmdd형식일시
+    elif len(dparam) == 4:
+        tmon = dparam[:2]
+        tdate = dparam[2:]
+    # 대응 포맷이 아닐시
+    else:
+        rtn = "err"
 
-    # 전처리. -혹은 / 기점으로 두개로 쪼갠다.
-    # 전처리. 좌0패딩
-    # 전처리. year에 올해년도를 대입하고 month,date에 인수를 대입한다.
-    # 전처리. 당월이12월이고 1월을 입력받았을시, year+1한다.
-
-    # 체크3. 날짜 유효성 체크
-    # return False
+    # 설정된 에러가 없을시
+    if rtn == "":
+        # 이번달이 12월이고 입력받은 달이 1월일경우
+        # 년도 +1
+        if tnowmon == "12" and (tmon == "1" or tmon == "01"):
+            tyear = tyear + 1
+        try:
+            rtn = datetime.strptime(
+                tyear + "/" + tmon + "/" + tdate, "%Y/%m/%d"
+            ).strftime("%Y/%m/%d")
+        except:
+            rtn = "err"
 
     return rtn
 
