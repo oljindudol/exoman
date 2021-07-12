@@ -42,8 +42,8 @@ def home(request, cmd, cmdpram):
 def createschedule(strparam):
     global mslist
     objtoday = datetime.now()
-    strnowyear = objtoday.year
-    strnowmon = objtoday.month
+    strnowyear = str(objtoday.year)
+    strnowmon = str(objtoday.month)
     # 날짜 필드 설정용 'yyyy-mm-dd'
     strfulldate = ""
     # 요일 필드 설정용 ex)'월'
@@ -53,12 +53,7 @@ def createschedule(strparam):
     # 보스 필드 설정용 ex)하루윌
     strbss = ""
     # 보스 참가자1~6 설정용
-    strone = ""
-    strtwo = ""
-    strthree = ""
-    strfour = ""
-    strfive = ""
-    strsix = ""
+    stratendee = []
 
     tempcmd = strparam.split(" ")
 
@@ -162,11 +157,11 @@ def hasEnoughParam(minparam, paramlenth):
 # 가능포맷3 MM월DD일 or M월D일
 # 가능포맷4 MMDD
 def tofulldate(dparam):
-    tyear = datetime.now().year
-    tnowmon = datetime.now().month
-    tmon = 0
-    tdate = 0
-    rtn = ""
+    strtyear = str(datetime.now().year)
+    strtnowmon = str(datetime.now().month)
+    strtmon = ""
+    strtdate = ""
+    strrtn = ""
 
     # 구분자가 '월'일경우 ex)m월d일
     # 파라미터 분리
@@ -202,6 +197,22 @@ def tofulldate(dparam):
     elif len(dparam) == 4:
         tmon = dparam[:2]
         tdate = dparam[2:]
+    # md형식일시
+    elif len(dparam) == 2:
+        tmon = dparam[0]
+        tdate = dparam[1]
+    # mmd or mdd 형식일시
+    # 10월1~9 vs 1월01~09일
+    # 11월1~9 vs 1월11~19일
+    # 12월1~9 vs 1월21~29일
+    # 의 이중의미를 가지나,
+    # 운용상 일주일내의 일정등록을 가정으로 하고
+    # 이중날짜중 가장차이 적게차이나는것이 20일 내외이므로 
+    # 두가지모두 날짜로 변환해 오늘날짜에 더 가까운것을 선택
+    elif len(dparam) == 3:
+        bdate1=isdate(strtyear,dparam[:2],dparam[2:])
+        bdate2=
+
     # 대응 포맷이 아닐시
     else:
         rtn = "err"
@@ -210,8 +221,8 @@ def tofulldate(dparam):
     if rtn == "":
         # 이번달이 12월이고 입력받은 달이 1월일경우
         # 년도 +1
-        if tnowmon == "12" and (tmon == "1" or tmon == "01"):
-            tyear = tyear + 1
+        if strtnowmon == "12" and (tmon == "1" or tmon == "01"):
+            tyear = str(int(strtyear) + 1)
         try:
             rtn = datetime.strptime(
                 tyear + "/" + tmon + "/" + tdate, "%Y/%m/%d"
@@ -220,6 +231,21 @@ def tofulldate(dparam):
             rtn = "err"
 
     return rtn
+
+
+# 날짜 인지 체크
+# 인수 연,월,일
+# 반환 True or False
+def isdate(year , mon ,date):
+    rtn=""
+    try:
+        datetime.strptime(year + "/" + mon + "/" + date, "%Y/%m/%d")
+        rtn=True
+    except:
+        rtn = False
+    
+    return rtn
+
 
 
 # 시간체크를 한다
