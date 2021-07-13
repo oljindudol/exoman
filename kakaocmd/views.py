@@ -2,6 +2,7 @@ from django.shortcuts import render
 from .models import Bschedule
 from datetime import datetime
 from datetime import deltatime
+import re
 
 # Create your views here.
 
@@ -96,21 +97,20 @@ def createschedule(strparam):
     ##시간설정블록
     # 시간이 유효할시
     # 시간 설정
-    if istime(tempcmd[1] == False):
-        dummy = 0
-    # 시간이 유효하지 않을 시
-    # 에러메세지 설정하고 함수끝
-    else:
+    strtime = totime(tempcmd[1])
+    if strtime == "err":
+        mslist.append("시간형식이 유효하지 않습니다.\nex1)월\nex2)화요일\nex3)7-8\nex4)07/08 ")
         return 0
 
     ##보스설정블록
     # 보스가 유효할시
     # 보스 설정
-    if isValidbss(tempcmd[2] == False):
-        dummy = 0
+    if isValidbss(tempcmd[2] == True):
+        strbss = tempcmd[2]
     # 보스가 유효하지 않을 시
     # 에러메세지 설정하고 함수끝
     else:
+        mslist.append("시간형식이 유효하지 않습니다.5글자이내.\nex1)하루윌\nex2)하스데\nex3)진듄더")
         return 0
 
     ##참가자설정블록
@@ -118,7 +118,8 @@ def createschedule(strparam):
     # 참가자 설정
     if False in list(isValidattendee(tempcmd[i]) for i in range(3, len(tempcmd))):
         for i in range(3, len(tempcmd)):
-            dummy = 0
+            stratendee.append(tempcmd[i])
+
     # 참가자가 "하나라도" 유효하지 않을 시
     # 에러메세지 설정하고 함수끝
     else:
@@ -213,14 +214,14 @@ def tofulldate(dparam):
         bdate1 = isdate(strtyear, dparam[:1], dparam[1:])
         bdate2 = isdate(strtyear, dparam[:2], dparam[2:])
         # 둘다 유효한 날짜가 아닐시
-        if bdate1 == False and bdate2 == False:
+        if (bdate1 == False) and (bdate2 == False):
             strrtn = "err"
         # 첫 번째 날짜만 유효할시
-        elif bdate1 == True and bdate2 == False:
+        elif (bdate1 == True) and (bdate2 == False):
             strtmon = dparam[:1]
             strtdate = dparam[1:]
         # 두 번째 날짜만 유효할시
-        elif bdate1 == False and bdate2 == True:
+        elif (bdate1 == False) and (bdate2 == True):
             strtmon = dparam[:2]
             strtdate = dparam[2:]
         else:
@@ -239,7 +240,7 @@ def tofulldate(dparam):
     if strrtn == "":
         # 이번달이 12월이고 입력받은 달이 1월일경우
         # 년도 +1
-        if strtnowmon == "12" and (strtmon == "1" or strtmon == "01"):
+        if (strtnowmon == "12") and (strtmon == "1" or strtmon == "01"):
             strtyear = str(int(strtyear) + 1)
         try:
             strrtn = datetime.strptime(
@@ -295,12 +296,30 @@ def isdate(year, mon, date):
     return rtn
 
 
-# 시간체크를 한다
+# 시간포맷으로 변환한다
 # 인수 시간부
 # 반환 시간이 유효할시 True를 반환
-# 대응포맷 hh:mm hhmm (24시간제)
-def istime(time):
-    rtn = False
+# 반환 시간이 유효하지 않을 시 "err"를 반환
+# 대응포맷 hh:mm (24시간제)
+# 대응포맷 hhmm (24시간제)
+def totime(time):
+    rtn = "err"
+    reg1 = re.compile(r"^([1-9]|[01][0-9]|2[0-3]):([0-5][0-9])$")
+    ttime = ""
+
+    if (":" in time) and (1 < len(time.splite(":"))):
+        str00hh = time.splite(":")[0].zfill(2)
+        str00mm = time.splite(":")[1].zfill(2)
+
+    if (":" not in time) and (2 < len(time) < 5):
+        str00hh = time[:-2].zfill(2)
+        str00mm = time[-2:].zfill(2)
+
+    ttime = str00hh + ":" + str00mm
+
+    if reg1.match(ttime):
+        rtn = ttime
+
     return rtn
 
 
@@ -308,25 +327,31 @@ def istime(time):
 # 인수 보스이름
 # 반환 길이가 최대길이 보다 작거나 같으면 True
 def isValidbss(bs):
-    return True
+    if len(bs < 5):
+        return True
+    else:
+        return False
 
 
 # 닉네임 길이체크
 # 인수 닉네임
 # 반환 길이가 최대길이 보다 작거나 같으면 True
 def isValidattendee(at):
-    return True
+    if len(at < 6):
+        return True
+    else:
+        return False
 
 
 # 인수1:오늘날짜 오브젝트
 # 인수2:찾는 요일
-# 반환값: 지정한요일이 돌아오는 가장 빠른날짜(당일포함)
+# 반환값: 지정한요일이 돌아오는 가장 빠른날짜(당일포함) YYYY/MM/DD
 def findnextweekday(objnowdate, strseekweekday):
     wdidx = shortweeklist.find(strseekweekday)
     # 지정요일이 오늘 요일과 같을때
     if objnowdate.weekday == wdidx:
-        return objnowdate.strftime("%Y-%m-%d")
+        return objnowdate.strftime("%Y/%m/%d")
     # 요일이 오는 가장빠른 날짜 구하기
     else:
         intdt = ((objnowdate.weekday + 7) % 7) - wdidx
-        return (objnowdate + deltatime(days=intdt)).strftime("%Y-%m-%d")
+        return (objnowdate + deltatime(days=intdt)).strftime("%Y/%m/%d")
