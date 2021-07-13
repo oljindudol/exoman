@@ -169,10 +169,10 @@ def tofulldate(dparam):
     if "월" in dparam:
         ttemp = dparam.splite("월")
         if len(ttemp) > 1:
-            tmon = ttemp[0]
-            tdate = ttemp[1].splite("일")[0]
+            strtmon = ttemp[0]
+            strtdate = ttemp[1].splite("일")[0]
         else:
-            rtn = "err"
+            strrtn = "err"
 
     # 구분자가 '-'일경우 ex)m-d일
     # 파라미터 분리
@@ -180,72 +180,119 @@ def tofulldate(dparam):
     elif "-" in dparam:
         ttemp = dparam.splite("-")
         if len(ttemp) > 1:
-            tmon = ttemp[0]
-            tdate = ttemp[1]
+            strtmon = ttemp[0]
+            strtdate = ttemp[1]
         else:
-            rtn = "err"
+            strrtn = "err"
     # 구분자가 '/'일경우 ex)m/d일
     # 월,일부분이 없을 경우 에러 설정
     elif "/" in dparam:
         ttemp = dparam.splite("/")
         if len(ttemp) > 1:
-            tmon = ttemp[0]
-            tdate = ttemp[1]
+            strtmon = ttemp[0]
+            strtdate = ttemp[1]
         else:
-            rtn = "err"
+            strrtn = "err"
     # mmdd형식일시
     elif len(dparam) == 4:
-        tmon = dparam[:2]
-        tdate = dparam[2:]
+        strtmon = dparam[:2]
+        strtdate = dparam[2:]
     # md형식일시
     elif len(dparam) == 2:
-        tmon = dparam[0]
-        tdate = dparam[1]
-    # mmd or mdd 형식일시
-    # 10월1~9 vs 1월01~09일
-    # 11월1~9 vs 1월11~19일
-    # 12월1~9 vs 1월21~29일
+        strtmon = dparam[0]
+        strtdate = dparam[1]
+    #  mdd or mmd 형식일시
+    #  1월01~09일 vs 10월1~9
+    #  1월11~19일 vs 11월1~9
+    #  1월21~29일 vs 12월1~9
     # 의 이중의미를 가지나,
     # 운용상 일주일내의 일정등록을 가정으로 하고
-    # 이중날짜중 가장차이 적게차이나는것이 20일 내외이므로 
+    # 이중날짜중 가장차이 적게차이나는것이 20일 내외이므로
     # 두가지모두 날짜로 변환해 오늘날짜에 더 가까운것을 선택
     elif len(dparam) == 3:
-        bdate1=isdate(strtyear,dparam[:2],dparam[2:])
-        bdate2=
+        bdate1 = isdate(strtyear, dparam[:1], dparam[1:])
+        bdate2 = isdate(strtyear, dparam[:2], dparam[2:])
+        # 둘다 유효한 날짜가 아닐시
+        if bdate1 == False and bdate2 == False:
+            strrtn = "err"
+        # 첫 번째 날짜만 유효할시
+        elif bdate1 == True and bdate2 == False:
+            strtmon = dparam[:1]
+            strtdate = dparam[1:]
+        # 두 번째 날짜만 유효할시
+        elif bdate1 == False and bdate2 == True:
+            strtmon = dparam[:2]
+            strtdate = dparam[2:]
+        else:
+            snmd = selectnearestmonanddate(
+                strtyear + "/" + dparam[:1] + "/" + dparam[1:],
+                strtyear + "/" + dparam[:2] + "/" + dparam[2:],
+            )
+            strtmon = snmd.splite("/")[0]
+            strtdate = snmd.splite("/")[1]
 
     # 대응 포맷이 아닐시
     else:
-        rtn = "err"
+        strrtn = "err"
 
     # 설정된 에러가 없을시
-    if rtn == "":
+    if strrtn == "":
         # 이번달이 12월이고 입력받은 달이 1월일경우
         # 년도 +1
-        if strtnowmon == "12" and (tmon == "1" or tmon == "01"):
-            tyear = str(int(strtyear) + 1)
+        if strtnowmon == "12" and (strtmon == "1" or strtmon == "01"):
+            strtyear = str(int(strtyear) + 1)
         try:
-            rtn = datetime.strptime(
-                tyear + "/" + tmon + "/" + tdate, "%Y/%m/%d"
+            strrtn = datetime.strptime(
+                strtyear + "/" + strtmon + "/" + strtdate, "%Y/%m/%d"
             ).strftime("%Y/%m/%d")
         except:
-            rtn = "err"
+            strrtn = "err"
 
-    return rtn
+    return strrtn
+
+
+# 날짜 두개를 받아서 가장 가까운 날짜를 반환
+# 인수1 yyyy/MM/D
+# 인수2 yyyy/M/DD
+# 반환 MM/DD문자열
+def selectnearestmonanddate(strdt1, strdt2):
+    objdt1 = datetime.strptime(strdt1, "%Y/%m/%d")
+    objdt2 = datetime.strptime(strdt2, "%Y/%m/%d")
+    objdttoday = datetime.now()
+
+    intdt_t1 = (objdt1 - objdttoday).days
+    intdt_t2 = (objdt2 - objdttoday).days
+
+    strrtn1 = str(objdt1.month) + "/" + str(objdt1.date)
+    strrtn2 = str(objdt2.month) + "/" + str(objdt2.date)
+
+    if intdt_t1 == 0:
+        return strrtn1
+    if intdt_t2 == 0:
+        return strrtn2
+
+    # 둘다 미래일경우
+    if (intdt_t1 > 0) and (intdt_t2 > 0):
+        return strrtn1
+    # t1보단미래 t2보단 과거
+    elif (intdt_t1 < 0) and (intdt_t2 > 0):
+        return strrtn2
+    # 둘다 과거
+    else:
+        return strrtn1
 
 
 # 날짜 인지 체크
 # 인수 연,월,일
 # 반환 True or False
-def isdate(year , mon ,date):
-    rtn=""
+def isdate(year, mon, date):
+    rtn = ""
     try:
         datetime.strptime(year + "/" + mon + "/" + date, "%Y/%m/%d")
-        rtn=True
+        rtn = True
     except:
         rtn = False
-    
     return rtn
-
 
 
 # 시간체크를 한다
