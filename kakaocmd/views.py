@@ -1,8 +1,8 @@
+from django.db.models import Q
 from django.shortcuts import render
 from .models import Bschedule
 from datetime import datetime
-from datetime import deltatime
-import re
+from datetime import timedelta
 
 # Create your views here.
 
@@ -11,6 +11,7 @@ mslist = []
 cmdlist = ["일정", "ㅇㅈ", "일정등록", "ㅇㅈㄷㄹ", "일정삭제", "ㅇㅈㅅㅈ"]
 shortweeklist = ["월", "화", "수", "목", "금", "토", "일"]
 longweeklist = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
+bsslist = ["루윌", "하루윌", "스데", "스데미", "하스데", "듄더", "진듄더", "검마", "검멘"]
 
 # main함수
 def home(request, cmd, cmdpram):
@@ -43,8 +44,6 @@ def home(request, cmd, cmdpram):
 def createschedule(strparam):
     global mslist
     objtoday = datetime.now()
-    strnowyear = str(objtoday.year)
-    strnowmon = str(objtoday.month)
     # 날짜 필드 설정용 'yyyy-mm-dd'
     strfulldate = ""
     # 요일 필드 설정용 ex)'월'
@@ -78,12 +77,11 @@ def createschedule(strparam):
     elif tempcmd[0] in longweeklist:
         strfulldate = findnextweekday(objtoday, tempcmd[0])
         strday = tempcmd[0][:1]
-
-    # 날짜형식이 유효할시
-    # 날짜,요일 설정
+    # 요일형식이 아닌경우
     else:
         temprtn = tofulldate(tempcmd[0])
-
+        # 날짜형식이 유효할시
+        # 날짜,요일 설정
         if temprtn != "err":
             strfulldate = temprtn
             strday = shortweeklist[datetime.strptime(temprtn, "%Y/%m/%d").weekday]
@@ -119,11 +117,36 @@ def createschedule(strparam):
     if False in list(isValidattendee(tempcmd[i]) for i in range(3, len(tempcmd))):
         for i in range(3, len(tempcmd)):
             stratendee.append(tempcmd[i])
-
     # 참가자가 "하나라도" 유효하지 않을 시
     # 에러메세지 설정하고 함수끝
     else:
         return 0
+
+    # DBinsert
+    bssch = Bschedule()
+    bssch.bdate = strfulldate
+    bssch.bday = strday
+    bssch.btime = strtime
+    bssch.bbname = strbss
+    bssch.bone = stratendee[0]
+    if len(stratendee) > 1:
+        bssch.btwo = bssch[1]
+    if len(stratendee) > 2:
+        bssch.bthree = bssch[2]
+    if len(stratendee) > 3:
+        bssch.bfour = bssch[3]
+    if len(stratendee) > 4:
+        bssch.bfive = bssch[4]
+    if len(stratendee) > 5:
+        bssch.bsix = bssch[5]
+
+    bssch.save()
+    mslist.append(
+        stratendee[0] + "님의" + strbss + "일정(" + strday + " " + strtime + ")이 등록되었읍니다."
+    )
+    selectschedule("none")
+
+    return 0
 
 
 def deleteschedule(pram):
@@ -131,9 +154,108 @@ def deleteschedule(pram):
 
 
 def selectschedule(pram):
-    # str(datetime.now().year)
-    schedules = Bschedule.objects.all()
+    global mslist
+    schedules = ""
+    strtoday = datetime.today().strftime("%Y/%m/%d")
+
+    if pram == "none":
+        schedules = Bschedule.objects.order_by("date", "time").all()
+        mslist.append(viewformatter("A", pram, schedules))
+
+    elif pram in bsslist:
+        schedules = schedules.filter(bbname=pram).order_by("date", "time")
+        mslist.append(viewformatter("C", pram, schedules))
+
+    else:
+        schedules = Bschedule.objects.filter(bdate__gte=strtoday)
+        schedules = schedules.filter(bsisdeleted=0)
+        schedules = schedules.filter(
+            Q(bone=pram)
+            | Q(btwo=pram)
+            | Q(bthree=pram)
+            | Q(bfour=pram)
+            | Q(bfive=pram)
+            | Q(bsix=pram)
+        ).order_by("date", "time")
+        mslist.append(viewformatter("C", pram, schedules))
+
     return 0
+
+
+# 쿼리의 결과 값을 받아서 메세지용 포맷(날짜별 그룹화)으로 바꾼다
+# 인수1: 메세지 타입(조건) A: 전체(조건없음) B: 보스 C:참가자
+# 인수2: 조건인자
+# 인수3: 오브젝트리스트
+# 반환: 메세지용 문자열
+def viewformatter(charmsgtype, strparam, objlist):
+    strtemp = ""
+    if charmsgtype == "A":
+        strtemp = "이번주 등록된 전체 일정입니다.\n\n"
+    if charmsgtype == "B":
+        strtemp = "이번주 " + strparam + " 일정입니다.\n\n"
+    if charmsgtype == "C":
+        strtemp = "이번주 " + strparam + "님의 일정입니다.\n\n"
+
+    if len(objlist) == 0:
+        strtemp = "일정이 없읍니다."
+        return strtemp
+
+    ozro = objlist[0]
+    strtemp = ozro.bday + " " + ozro.bdate[5:7] + "/" + ozro.bdate[8:10] + "\n"
+    strtemp = strtemp + ozro.btime + " " + ozro.bbname + "\n"
+    strtemp = (
+        strtemp
+        + "            "
+        + ozro.bone
+        + " "
+        + ozro.btwo
+        + " "
+        + ozro.bthree
+        + " "
+        + ozro.bfour
+        + " "
+        + ozro.bfive
+        + " "
+        + ozro.bsix
+    )
+    strtemp = strtemp.rstrip(" ") + "\n"
+
+    if len(objlist) < 2:
+        strtemp = strtemp.rstrip("\n")
+        return strtemp
+
+    for i in range(1, len(objlist)):
+        oj = objlist[i]
+        if oj.bdate != objlist[i - 1].date:
+            strtemp = (
+                strtemp
+                + oj.bday
+                + " "
+                + oj.bdate[5:7].lstrip("0")
+                + "/"
+                + oj.bdate[8:10].lstrip("0")
+                + "\n"
+            )
+        strtemp = strtemp + oj.btime + " " + oj.bbname + "\n"
+        strtemp = (
+            strtemp
+            + "            "
+            + oj.bone
+            + " "
+            + oj.btwo
+            + " "
+            + oj.bthree
+            + " "
+            + oj.bfour
+            + " "
+            + oj.bfive
+            + " "
+            + oj.bsix
+        )
+        strtemp = strtemp.rstrip(" ") + "\n"
+
+    strtemp = strtemp.rstrip("\n")
+    return strtemp
 
 
 # 인수의 갯수를 체크한다.
