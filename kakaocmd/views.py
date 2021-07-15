@@ -3,6 +3,7 @@ from django.shortcuts import render
 from .models import Bschedule
 from datetime import datetime
 from datetime import timedelta
+import re
 
 # Create your views here.
 
@@ -476,4 +477,4 @@ def findnextweekday(objnowdate, strseekweekday):
     # 요일이 오는 가장빠른 날짜 구하기
     else:
         intdt = ((objnowdate.weekday + 7) % 7) - wdidx
-        return (objnowdate + deltatime(days=intdt)).strftime("%Y/%m/%d")
+        return (objnowdate + timedelta(days=intdt)).strftime("%Y/%m/%d")
