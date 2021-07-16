@@ -187,7 +187,7 @@ def selectschedule(pram):
         schedules = Bschedule.objects.filter(bdate__gte=strtoday)
         schedules = schedules.filter(bsisdeleted=0)
         schedules = schedules.filter(bbname=pram).order_by("-bdate", "btime")
-        mslist.append(viewformatter("C", pram, schedules))
+        mslist.append(viewformatter("B", pram, schedules))
 
     else:
         schedules = Bschedule.objects.filter(bdate__gte=strtoday)
