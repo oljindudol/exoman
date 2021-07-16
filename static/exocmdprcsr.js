@@ -15,14 +15,14 @@ function getmymsg(cmd, param) {
 }
 
 
-    function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
-        var cmd = msg.split(" ")[0];
-        var param = msg.replace(cmd + " ", "");
-        var mymsg = "";
-        if (cmd.startsWith("/")) {
-            mymsg = getmymsg(cmd, param);
-            if (mymsg.length() > 0) {
-                mymsg.forEach(e => replier.reply(e));
-            }
+function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
+    var cmd = msg.split(" ")[0];
+    var param = msg.replace(cmd + " ", "");
+    var mymsg = "";
+    if (cmd.startsWith("/")) {
+        mymsg = getmymsg(cmd, param);
+        if (mymsg.length() > 0) {
+            mymsg.forEach(e => replier.reply(e));
         }
     }
+}
