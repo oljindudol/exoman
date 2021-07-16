@@ -507,5 +507,5 @@ def findnextweekday(objnowdate, strseekweekday):
         return objnowdate.strftime("%Y/%m/%d")
     # 요일이 오는 가장빠른 날짜 구하기
     else:
-        intdt = ((objnowdate.weekday() + 7) % 7) - wdidx
+        intdt = ((objnowdate.weekday() + 7) % 7) + wdidx
         return (objnowdate + timedelta(days=intdt)).strftime("%Y/%m/%d")
