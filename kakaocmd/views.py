@@ -72,7 +72,7 @@ def createschedule(strparam):
     # 긴요일형식일경우
     # 가장가까운 요일에 해당하는 날짜를 설정(X요일중 'X'만설정)
     elif tempcmd[0] in longweeklist:
-        strfulldate = findnextweekday(objtoday, tempcmd[0])
+        strfulldate = findnextweekday(objtoday, tempcmd[0][0])
         strday = tempcmd[0][:1]
     # 요일형식이 아닌경우
     else:
