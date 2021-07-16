@@ -127,15 +127,15 @@ def createschedule(strparam):
     bssch.bbname = strbss
     bssch.bone = stratendee[0]
     if len(stratendee) > 1:
-        bssch.btwo = bssch[1]
+        bssch.btwo = stratendee[1]
     if len(stratendee) > 2:
-        bssch.bthree = bssch[2]
+        bssch.bthree = stratendee[2]
     if len(stratendee) > 3:
-        bssch.bfour = bssch[3]
+        bssch.bfour = stratendee[3]
     if len(stratendee) > 4:
-        bssch.bfive = bssch[4]
+        bssch.bfive = stratendee[4]
     if len(stratendee) > 5:
-        bssch.bsix = bssch[5]
+        bssch.bsix = stratendee[5]
 
     # 중복체크
     # 중복이 있을경우
