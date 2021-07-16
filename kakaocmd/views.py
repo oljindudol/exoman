@@ -163,7 +163,7 @@ def schedule_exists(objsc):
     schedules = Bschedule.objects.filter(bdate__gte=strtoday)
     schedules = schedules.filter(bsisdeleted=0)
     schedules = schedules.filter(bone=objsc.bone)
-    schedules = schedules.filter(bone=objsc.bbname)
+    schedules = schedules.filter(bbname=objsc.bbname)
     if len(schedules) > 0:
         return True
     else:
