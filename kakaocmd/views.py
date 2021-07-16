@@ -27,13 +27,9 @@ def home(request, cmd, cmdpram):
     # 일정등록
     if cmd in ["일정등록", "ㅇㅈㄷㄹ"]:
         createschedule(cmdpram)
-        selectschedule("none")
-
     # 일정삭제
     if cmd in ["일정삭제", "ㅇㅈㅅㅈ"]:
         deleteschedule(cmdpram)
-        selectschedule("none")
-
     # 일정조회
     if cmd in ["일정", "ㅇㅈ"]:
         selectschedule(cmdpram)
@@ -104,23 +100,23 @@ def createschedule(strparam):
     ##보스설정블록
     # 보스가 유효할시
     # 보스 설정
-    if isValidbss(tempcmd[2] == True):
+    if isValidbss(tempcmd[2]) == True:
         strbss = tempcmd[2]
     # 보스가 유효하지 않을 시
     # 에러메세지 설정하고 함수끝
     else:
-        mslist.append("시간형식이 유효하지 않습니다.5글자이내.\nex1)하루윌\nex2)하스데\nex3)진듄더")
+        mslist.append("보스형식이 유효하지 않습니다.\nex)" + ",".bsslist)
         return 0
-
     ##참가자설정블록
     # 참가자가 "모두" 유효할시
     # 참가자 설정
-    if False in list(isValidattendee(tempcmd[i]) for i in range(3, len(tempcmd))):
+    if False not in list(isValidattendee(tempcmd[i]) for i in range(3, len(tempcmd))):
         for i in range(3, len(tempcmd)):
             stratendee.append(tempcmd[i])
     # 참가자가 "하나라도" 유효하지 않을 시
     # 에러메세지 설정하고 함수끝
     else:
+        mslist.append("참가자 이름이 너무깁니다.6글자 이내")
         return 0
 
     # DBinsert
@@ -141,13 +137,37 @@ def createschedule(strparam):
     if len(stratendee) > 5:
         bssch.bsix = bssch[5]
 
-    bssch.save()
-    mslist.append(
-        stratendee[0] + "님의" + strbss + "일정(" + strday + " " + strtime + ")이 등록되었읍니다."
-    )
-    selectschedule("none")
+    # 중복체크
+    # 중복이 있을경우
+    if schedule_exists(bssch):
+        mslist.append(stratendee[0] + "님의 " + strbss + " 일정이 이미 등록되어 있읍니다.")
+        selectschedule(stratendee[0])
+        return 0
+    else:
+        bssch.save()
+        mslist.append(
+            stratendee[0]
+            + "님의 "
+            + strbss
+            + " 일정("
+            + strday
+            + " "
+            + strtime
+            + ")이 등록되었읍니다."
+        )
+        selectschedule("none")
+        return 0
 
-    return 0
+
+def schedule_exists(objsc):
+    strtoday = datetime.today().strftime("%Y/%m/%d")
+    schedules = Bschedule.objects.filter(bdate__gte=strtoday)
+    schedules = schedules.filter(bsisdeleted=0)
+    schedules = schedules.filter(bone=objsc.bone)
+    if len(schedules) > 0:
+        return True
+    else:
+        return False
 
 
 def deleteschedule(pram):
@@ -160,11 +180,13 @@ def selectschedule(pram):
     strtoday = datetime.today().strftime("%Y/%m/%d")
 
     if pram == "none":
-        schedules = Bschedule.objects.order_by("date", "time").all()
+        schedules = Bschedule.objects.order_by("-bdate", "btime").all()
         mslist.append(viewformatter("A", pram, schedules))
 
     elif pram in bsslist:
-        schedules = schedules.filter(bbname=pram).order_by("date", "time")
+        schedules = Bschedule.objects.filter(bdate__gte=strtoday)
+        schedules = schedules.filter(bsisdeleted=0)
+        schedules = schedules.filter(bbname=pram).order_by("-bdate", "btime")
         mslist.append(viewformatter("C", pram, schedules))
 
     else:
@@ -177,7 +199,7 @@ def selectschedule(pram):
             | Q(bfour=pram)
             | Q(bfive=pram)
             | Q(bsix=pram)
-        ).order_by("date", "time")
+        ).order_by("-bdate", "btime")
         mslist.append(viewformatter("C", pram, schedules))
 
     return 0
@@ -190,6 +212,7 @@ def selectschedule(pram):
 # 반환: 메세지용 문자열
 def viewformatter(charmsgtype, strparam, objlist):
     strtemp = ""
+
     if charmsgtype == "A":
         strtemp = "이번주 등록된 전체 일정입니다.\n\n"
     if charmsgtype == "B":
@@ -202,7 +225,15 @@ def viewformatter(charmsgtype, strparam, objlist):
         return strtemp
 
     ozro = objlist[0]
-    strtemp = ozro.bday + " " + ozro.bdate[5:7] + "/" + ozro.bdate[8:10] + "\n"
+    strtemp = (
+        strtemp
+        + ozro.bday
+        + " "
+        + ozro.bdate[5:7].lstrip("0")
+        + "/"
+        + ozro.bdate[8:10].lstrip("0")
+        + "\n"
+    )
     strtemp = strtemp + ozro.btime + " " + ozro.bbname + "\n"
     strtemp = (
         strtemp
@@ -227,7 +258,7 @@ def viewformatter(charmsgtype, strparam, objlist):
 
     for i in range(1, len(objlist)):
         oj = objlist[i]
-        if oj.bdate != objlist[i - 1].date:
+        if oj.bdate != objlist[i - 1].bdate:
             strtemp = (
                 strtemp
                 + oj.bday
@@ -266,9 +297,9 @@ def viewformatter(charmsgtype, strparam, objlist):
 def hasEnoughParam(minparam, paramlenth):
     global mslist
     if paramlenth >= minparam:
-        mslist.append("인수 갯수가 부족합니다.")
         return True
     else:
+        mslist.append("인수 갯수가 부족합니다.")
         return False
 
 
@@ -291,10 +322,10 @@ def tofulldate(dparam):
     # 파라미터 분리
     # 월,일부분이 없을 경우 에러 설정
     if "월" in dparam:
-        ttemp = dparam.splite("월")
+        ttemp = dparam.split("월")
         if len(ttemp) > 1:
             strtmon = ttemp[0]
-            strtdate = ttemp[1].splite("일")[0]
+            strtdate = ttemp[1].split("일")[0]
         else:
             strrtn = "err"
 
@@ -302,7 +333,7 @@ def tofulldate(dparam):
     # 파라미터 분리
     # 월,일부분이 없을 경우 에러 설정
     elif "-" in dparam:
-        ttemp = dparam.splite("-")
+        ttemp = dparam.split("-")
         if len(ttemp) > 1:
             strtmon = ttemp[0]
             strtdate = ttemp[1]
@@ -311,7 +342,7 @@ def tofulldate(dparam):
     # 구분자가 '/'일경우 ex)m/d일
     # 월,일부분이 없을 경우 에러 설정
     elif "/" in dparam:
-        ttemp = dparam.splite("/")
+        ttemp = dparam.split("/")
         if len(ttemp) > 1:
             strtmon = ttemp[0]
             strtdate = ttemp[1]
@@ -352,8 +383,8 @@ def tofulldate(dparam):
                 strtyear + "/" + dparam[:1] + "/" + dparam[1:],
                 strtyear + "/" + dparam[:2] + "/" + dparam[2:],
             )
-            strtmon = snmd.splite("/")[0]
-            strtdate = snmd.splite("/")[1]
+            strtmon = snmd.split("/")[0]
+            strtdate = snmd.split("/")[1]
 
     # 대응 포맷이 아닐시
     else:
@@ -430,9 +461,9 @@ def totime(time):
     reg1 = re.compile(r"^([1-9]|[01][0-9]|2[0-3]):([0-5][0-9])$")
     ttime = ""
 
-    if (":" in time) and (1 < len(time.splite(":"))):
-        str00hh = time.splite(":")[0].zfill(2)
-        str00mm = time.splite(":")[1].zfill(2)
+    if (":" in time) and (1 < len(time.split(":"))):
+        str00hh = time.split(":")[0].zfill(2)
+        str00mm = time.split(":")[1].zfill(2)
 
     if (":" not in time) and (2 < len(time) < 5):
         str00hh = time[:-2].zfill(2)
@@ -448,9 +479,9 @@ def totime(time):
 
 # 보스이름 길이체크
 # 인수 보스이름
-# 반환 길이가 최대길이 보다 작거나 같으면 True
+# 반환 인수가 보스리스트에 등록되어있으면 true
 def isValidbss(bs):
-    if len(bs < 5):
+    if bs in bsslist:
         return True
     else:
         return False
@@ -460,7 +491,7 @@ def isValidbss(bs):
 # 인수 닉네임
 # 반환 길이가 최대길이 보다 작거나 같으면 True
 def isValidattendee(at):
-    if len(at < 6):
+    if len(at) < 6:
         return True
     else:
         return False
@@ -470,11 +501,11 @@ def isValidattendee(at):
 # 인수2:찾는 요일
 # 반환값: 지정한요일이 돌아오는 가장 빠른날짜(당일포함) YYYY/MM/DD
 def findnextweekday(objnowdate, strseekweekday):
-    wdidx = shortweeklist.find(strseekweekday)
+    wdidx = shortweeklist.index(strseekweekday)
     # 지정요일이 오늘 요일과 같을때
     if objnowdate.weekday == wdidx:
         return objnowdate.strftime("%Y/%m/%d")
     # 요일이 오는 가장빠른 날짜 구하기
     else:
-        intdt = ((objnowdate.weekday + 7) % 7) - wdidx
+        intdt = ((objnowdate.weekday() + 7) % 7) - wdidx
         return (objnowdate + timedelta(days=intdt)).strftime("%Y/%m/%d")
