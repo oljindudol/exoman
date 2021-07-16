@@ -94,7 +94,7 @@ def createschedule(strparam):
     # 시간 설정
     strtime = totime(tempcmd[1])
     if strtime == "err":
-        mslist.append("시간형식이 유효하지 않습니다.\nex1)월\nex2)화요일\nex3)7-8\nex4)07/08 ")
+        mslist.append("시간형식이 유효하지 않습니다.\nex1)00:20\nex2)0020")
         return 0
 
     ##보스설정블록
@@ -155,7 +155,6 @@ def createschedule(strparam):
             + strtime
             + ")이 등록되었읍니다."
         )
-        selectschedule("none")
         return 0
 
 
@@ -164,6 +163,7 @@ def schedule_exists(objsc):
     schedules = Bschedule.objects.filter(bdate__gte=strtoday)
     schedules = schedules.filter(bsisdeleted=0)
     schedules = schedules.filter(bone=objsc.bone)
+    schedules = schedules.filter(bone=objsc.bbname)
     if len(schedules) > 0:
         return True
     else:
@@ -171,6 +171,22 @@ def schedule_exists(objsc):
 
 
 def deleteschedule(pram):
+    global mslist
+    mslist.append("미구현 기능입니다. 관리자에게 문의 하십시오.")
+    #objtoday = datetime.now()
+    # 보스 필드 설정용 ex)하루윌
+    #strbss = ""
+    # 보스 참가자1 설정용
+    #stratendee = ""
+    #strtoday = datetime.today().strftime("%Y/%m/%d")
+
+    #bssch = Bschedule()
+
+    
+    #schedules = Bschedule.objects.filter(bdate__gte=strtoday)
+    #schedules = schedules.filter(bsisdeleted=0)
+    #schedules = schedules.filter(bone=objsc.bone)
+
     return 0
 
 
@@ -507,5 +523,7 @@ def findnextweekday(objnowdate, strseekweekday):
         return objnowdate.strftime("%Y/%m/%d")
     # 요일이 오는 가장빠른 날짜 구하기
     else:
-        intdt = ((objnowdate.weekday() + 7) % 7) + wdidx
+        intdt = wdidx - objnowdate.weekday()
+        if intdt<0:
+            intdt = intdt+7
         return (objnowdate + timedelta(days=intdt)).strftime("%Y/%m/%d")
