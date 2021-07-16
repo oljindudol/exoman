@@ -1,5 +1,4 @@
-<script language="javascript" type="text/javascript" >
-
+<script>
 //외부모듈 테스트
     function test2() {
         alert("test2 실행됨")
