@@ -164,6 +164,7 @@ def schedule_exists(objsc):
     schedules = schedules.filter(bsisdeleted=0)
     schedules = schedules.filter(bone=objsc.bone)
     schedules = schedules.filter(bbname=objsc.bbname)
+    print(schedules.query)
     if len(schedules) > 0:
         return True
     else:
@@ -172,20 +173,65 @@ def schedule_exists(objsc):
 
 def deleteschedule(pram):
     global mslist
-    mslist.append("미구현 기능입니다. 관리자에게 문의 하십시오.")
-    #objtoday = datetime.now()
+    #mslist.append("미구현 기능입니다. 관리자에게 문의 하십시오.")
+    objtoday = datetime.now()
     # 보스 필드 설정용 ex)하루윌
-    #strbss = ""
+    strbss = ""
     # 보스 참가자1 설정용
-    #stratendee = ""
-    #strtoday = datetime.today().strftime("%Y/%m/%d")
+    stratendee = ""
+    strtoday = datetime.today().strftime("%Y/%m/%d")
 
-    #bssch = Bschedule()
+    tempcmd = pram.split(" ")
 
-    
-    #schedules = Bschedule.objects.filter(bdate__gte=strtoday)
-    #schedules = schedules.filter(bsisdeleted=0)
-    #schedules = schedules.filter(bone=objsc.bone)
+    # 인수 최소2개인것 확인
+    # 1개 이하 일경우 에러메세지 등록후 끝
+    if hasEnoughParam(2, len(tempcmd)) == False:
+        mslist.append(
+            "ex1)/일정삭제 가람 하루윌. "
+        )
+        return 0
+
+    ##참가자설정블록
+    # 주최자 유효할시
+    # 주최자 설정
+    if False != isValidattendee(tempcmd[0]):
+        stratendee=tempcmd[0]
+    # 주최자 유효하지 않을 시
+    # 에러메세지 설정하고 함수끝
+    else:
+        mslist.append("참가자 이름이 너무깁니다.6글자 이내")
+        return 0
+
+    ##보스설정블록
+    # 보스가 유효할시
+    # 보스 설정
+    if isValidbss(tempcmd[1]) == True:
+        strbss = tempcmd[1]
+    # 보스가 유효하지 않을 시
+    # 에러메세지 설정하고 함수끝
+    else:
+        mslist.append("보스형식이 유효하지 않습니다.\nex)" + ",".join(bsslist))
+        return 0
+
+    bssch=Bschedule()
+    bssch.bbname = strbss
+    bssch.bone = stratendee
+    #일정 존재 체크
+    #해당 일정이 있을시 isdeleted 에 삭제를 넣음
+    if  schedule_exists(bssch):
+        schedules = Bschedule.objects.filter(bdate__gte=strtoday)
+        schedules = schedules.filter(bsisdeleted=0)
+        schedules = schedules.filter(bone=bssch.bone)
+        schedules = schedules.filter(bbname=bssch.bbname)
+        schedules = schedules.update(bsisdeleted = "1")
+        mslist.append("이번 주 "+stratendee+ "님의 " + strbss + " 일정이 삭제되었읍니다")
+
+    #존재 하지 않을 시 에러메세지 설정후 함수끝
+    else:
+        mslist.append("이번 주 "+stratendee + "님의 " + strbss + " 일정이 없습니다")
+        selectschedule("none")
+
+        return 0
 
     return 0
 
@@ -196,7 +242,9 @@ def selectschedule(pram):
     strtoday = datetime.today().strftime("%Y/%m/%d")
 
     if pram == "none":
-        schedules = Bschedule.objects.order_by("-bdate", "btime").all()
+        schedules = Bschedule.objects.filter(bdate__gte=strtoday)
+        schedules = schedules.filter(bsisdeleted="0")
+        schedules = schedules.order_by("-bdate", "btime").all()
         mslist.append(viewformatter("A", pram, schedules))
 
     elif pram in bsslist:

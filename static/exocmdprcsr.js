@@ -4,7 +4,7 @@ function getmymsg(cmd, param) {
   var rawhtml = "";
   var eurl = "";
   try {
-    eurl = "https://exoman.herokuapp.com/kakaocmd" + cmd + "/" + param.replace(" ", "%20");
+    eurl = "https://exoman.herokuapp.com/kakaocmd" + cmd + "/" + param.replace(" ", "%20").replace("/","-");
     rawhtml = org.jsoup.Jsoup.connect(eurl).get();
     arrpres = rawhtml.select("pre");
     arrret.push(arrpres);
@@ -18,9 +18,9 @@ function getmymsg(cmd, param) {
 }
 function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
   var cmd = msg.split(" ")[0];
-  var param = msg.toString().replace(cmd, "").trim();
+  var param = msg.toString().replace(cmd, "").trim(); 
   var mymsg=[];
-  if (param === undefined) {
+  if (param == "") {
     param = "none"
     ;}
   if (cmd.startsWith("/")) {
