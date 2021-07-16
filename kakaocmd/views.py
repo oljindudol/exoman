@@ -81,7 +81,7 @@ def createschedule(strparam):
         # 날짜,요일 설정
         if temprtn != "err":
             strfulldate = temprtn
-            strday = shortweeklist[datetime.strptime(temprtn, "%Y/%m/%d").weekday]
+            strday = shortweeklist[datetime.strptime(temprtn, "%Y/%m/%d").weekday()]
 
         # 날짜가 유효하지 않을 시
         # 에러메세지 설정하고 함수끝
@@ -503,7 +503,7 @@ def isValidattendee(at):
 def findnextweekday(objnowdate, strseekweekday):
     wdidx = shortweeklist.index(strseekweekday)
     # 지정요일이 오늘 요일과 같을때
-    if objnowdate.weekday == wdidx:
+    if objnowdate.weekday() == wdidx:
         return objnowdate.strftime("%Y/%m/%d")
     # 요일이 오는 가장빠른 날짜 구하기
     else:
