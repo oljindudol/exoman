@@ -105,7 +105,7 @@ def createschedule(strparam):
     # 보스가 유효하지 않을 시
     # 에러메세지 설정하고 함수끝
     else:
-        mslist.append("보스형식이 유효하지 않습니다.\nex)" + ",".bsslist)
+        mslist.append("보스형식이 유효하지 않습니다.\nex)" + ",".join(bsslist))
         return 0
     ##참가자설정블록
     # 참가자가 "모두" 유효할시
