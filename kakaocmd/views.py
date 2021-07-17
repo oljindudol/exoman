@@ -244,13 +244,13 @@ def selectschedule(pram):
     if pram == "none":
         schedules = Bschedule.objects.filter(bdate__gte=strtoday)
         schedules = schedules.filter(bsisdeleted="0")
-        schedules = schedules.order_by("-bdate", "btime").all()
+        schedules = schedules.order_by("bdate", "btime").all()
         mslist.append(viewformatter("A", pram, schedules))
 
     elif pram in bsslist:
         schedules = Bschedule.objects.filter(bdate__gte=strtoday)
         schedules = schedules.filter(bsisdeleted=0)
-        schedules = schedules.filter(bbname=pram).order_by("-bdate", "btime")
+        schedules = schedules.filter(bbname=pram).order_by("bdate", "btime")
         mslist.append(viewformatter("B", pram, schedules))
 
     else:
@@ -263,7 +263,7 @@ def selectschedule(pram):
             | Q(bfour=pram)
             | Q(bfive=pram)
             | Q(bsix=pram)
-        ).order_by("-bdate", "btime")
+        ).order_by("bdate", "btime")
         mslist.append(viewformatter("C", pram, schedules))
 
     return 0
