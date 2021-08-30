@@ -168,7 +168,7 @@ def createschedule(strparam):
         + " "
         + strtime
         + ")이 등록되었읍니다."
-        + '\u200b'.repeat(500) + '\n\n'+viewformatter("A", "", schedules)
+        + '\u200b'*500+ '\n\n'+viewformatter("A", "", schedules)
         )
         return 0
 
