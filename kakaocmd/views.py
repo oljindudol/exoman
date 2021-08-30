@@ -9,7 +9,7 @@ import re
 
 
 mslist = []
-cmdlist = ["일정", "ㅇㅈ", "일정등록", "ㅇㅈㄷㄹ", "일정삭제", "ㅇㅈㅅㅈ"]
+cmdlist = ["일정", "ㅇㅈ", "일정등록", "ㅇㅈㄷㄹ", "일정삭제", "ㅇㅈㅅㅈ","도움말","커맨드","ㄷㅇㅁ","?","ㅋㅁㄷ"]
 shortweeklist = ["월", "화", "수", "목", "금", "토", "일"]
 longweeklist = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
 bsslist = ["루윌", "하루윌", "스데", "스데미", "하스데", "듄더", "진듄더", "검마", "검멘","카엔슬","가엔슬","카가엔슬","노엔슬"]
@@ -34,8 +34,16 @@ def home(request, cmd, cmdpram):
     if cmd in ["일정", "ㅇㅈ"]:
         selectschedule(cmdpram)
 
+    # 커맨드 도움말
+    if cmd in ["도움말","커맨드","ㄷㅇㅁ","?","ㅋㅁㄷ"]:
+        selectcmd()
+
     return render(request, "home.html", {"mslist": mslist})
 
+# 도움말
+def selectcmd():
+    mslist.append("등록\n/일정등록 07/18 01:30 하스데 모밀\n/일정등록 07/18 01:00 하루윌 가람 보곰 요정\n/ㅇㅈㄷㄹ목 하루윌 조아 요정 \n\n삭제\n/ㅇㅈㅅㅈ 듣끅 하루윌 \n\n조회 \n/ㅇㅈ or /일정 (보스 or 사람)")
+    return 0
 
 # 일정등록
 def createschedule(strparam):
