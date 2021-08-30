@@ -153,7 +153,6 @@ def createschedule(strparam):
         return 0
     else:
         bssch.save()
-        global mslist
         schedules = ""
         strtoday = datetime.today().strftime("%Y/%m/%d")
         schedules = Bschedule.objects.filter(bdate__gte=strtoday)
