@@ -9,7 +9,7 @@ import re
 
 
 mslist = []
-cmdlist = ["일정", "ㅇㅈ", "일정등록", "ㅇㅈㄷㄹ", "일정삭제", "ㅇㅈㅅㅈ","도움말","커맨드","ㄷㅇㅁ","?","ㅋㅁㄷ","명령어","ㅁㄹㅇ"]
+cmdlist = ["일정", "ㅇㅈ", "일정등록", "ㅇㅈㄷㄹ", "일정삭제", "ㅇㅈㅅㅈ","도움말","커맨드","ㄷㅇㅁ","ㅋㅁㄷ","명령어","ㅁㄹㅇ"]
 shortweeklist = ["월", "화", "수", "목", "금", "토", "일"]
 longweeklist = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
 bsslist = ["루윌", "하루윌", "스데", "스데미", "하스데", "듄더", "진듄더", "검마", "검멘","카엔슬","가엔슬","카가엔슬","노엔슬"]
@@ -35,7 +35,7 @@ def home(request, cmd, cmdpram):
         selectschedule(cmdpram)
 
     # 커맨드 도움말
-    if cmd in ["도움말","커맨드","ㄷㅇㅁ","?","ㅋㅁㄷ","명령어","ㅁㄹㅇ"]:
+    if cmd in ["도움말","커맨드","ㄷㅇㅁ","ㅋㅁㄷ","명령어","ㅁㄹㅇ"]:
         selectcmd()
 
     return render(request, "home.html", {"mslist": mslist})
@@ -153,15 +153,23 @@ def createschedule(strparam):
         return 0
     else:
         bssch.save()
+        global mslist
+        schedules = ""
+        strtoday = datetime.today().strftime("%Y/%m/%d")
+        schedules = Bschedule.objects.filter(bdate__gte=strtoday)
+        schedules = schedules.filter(bsisdeleted="0")
+        schedules = schedules.order_by("bdate", "btime").all()
+
         mslist.append(
-            stratendee[0]
-            + "님의 "
-            + strbss
-            + " 일정("
-            + strday
-            + " "
-            + strtime
-            + ")이 등록되었읍니다."
+        stratendee[0]
+        + "님의 "
+        + strbss
+        + " 일정("
+        + strday
+        + " "
+        + strtime
+        + ")이 등록되었읍니다."
+        + '\u200b'.repeat(500) + '\n\n'+viewformatter("A", "", schedules)
         )
         return 0
 
