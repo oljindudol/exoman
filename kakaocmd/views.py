@@ -570,7 +570,7 @@ def isValidbss(bs):
 # 인수 닉네임
 # 반환 길이가 최대길이 보다 작거나 같으면 True
 def isValidattendee(at):
-    if len(at) < 6:
+    if len(at) <= 6:
         return True
     else:
         return False
